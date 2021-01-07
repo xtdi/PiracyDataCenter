@@ -3,18 +3,19 @@ from mariadb.mariadb_manager import MariadbManager
 
 def convert_insertsql(sqlserverscript):
 
-    mysql_sql_str = "INSERT INTO shunfeng"
+    mysql_sql_str = "INSERT INTO shunfeng "
     sqlserverscript = sqlserverscript.replace("[dbo].", "")
 
     fields_left_parenthesis_pos = sqlserverscript.find("(")
     fields_right_parenthesis_pos = sqlserverscript.find(")")
 
+    """"
     temp_insert_str = sqlserverscript[0:fields_left_parenthesis_pos-1].strip()
-    tabel_name = temp_insert_str[temp_insert_str.rfind(" ")+1:len(temp_insert_str)]
-    tabel_name = tabel_name.replace("[", "")
-    tabel_name = tabel_name.replace("]", "")
-    mysql_sql_str = mysql_sql_str + tabel_name
-
+    table_name = temp_insert_str[temp_insert_str.rfind(" ")+1:len(temp_insert_str)]
+    table_name = tabel_name.replace("[", "")
+    table_name = tabel_name.replace("]", "")
+    mysql_sql_str = mysql_sql_str + table_name
+    """
     fileds_words = sqlserverscript[fields_left_parenthesis_pos:fields_right_parenthesis_pos+1]
     fileds_words = fileds_words.replace("[", "")
     fileds_words = fileds_words.replace("]", "")
@@ -74,50 +75,7 @@ def parse_sqlserverscript():
                 print("---------%d行" % num)
                 break
 
-'''
-def exec_sql(filename='hj_users.sql'):
-    """
-    执行SQL SERVER文件
-    :param filename: sqlserver文件名
-    :return:
-    """
 
-    try:
-        conn = pyodbc.connect(DRIVER='{SQL Server}',
-                              SERVER='127.0.0.1',
-                              DATABASE='xxxxxxxxx',
-                              UID='xxx',
-                              PWD='xxxxxxxxxx',
-                              charset='utf-8')
-        cur = conn.cursor()
-    except pyodbc.DatabaseError, ex:
-        print 'SQL Server connecting error,reason is:'+str(ex)
-        sys.exit()
-
-    counts = 0
-    with open(filename, 'r') as fp:
-        while True:
-            line = fp.readline()
-            if not line:
-                print 'the items of %d is finished! -- %s ' % \
-                      (counts, time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
-                break
-
-            try:
-                cur.execute(u'%s' % line)
-                conn.commit()
-                counts += 1
-            except pyodbc.Error:
-                open('res_error.sql', 'a').write(line)
-
-            if counts % 100000 == 0:
-                print 'the items of %d is finished! -- %s ' % \
-                      (counts, time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
-
-    cur.close()
-    conn.close()
-
-'''
 def main():
 
     try:
