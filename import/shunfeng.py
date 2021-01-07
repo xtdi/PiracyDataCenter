@@ -3,7 +3,7 @@ from mariadb.mariadb_manager import MariadbManager
 
 def convert_insertsql(sqlserverscript):
 
-    mysql_sql_str = "INSERT INTO "
+    mysql_sql_str = "INSERT INTO shunfeng"
     sqlserverscript = sqlserverscript.replace("[dbo].", "")
 
     fields_left_parenthesis_pos = sqlserverscript.find("(")
@@ -46,7 +46,7 @@ def convert_insertsql(sqlserverscript):
 
 def parse_sqlserverscript():
 
-    mariadbManager = MariadbManager("", 80, "", "", "",  charset='GBK')
+    mariadbManager = MariadbManager("192.168.232.128", 3306, "privacydata", "root", "pmo@2016",  charset='GBK')
     mariadbManager.connect()
 
     file_full_path = r"D:\downloads\privacydata\shunfeng.sql"
