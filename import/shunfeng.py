@@ -113,6 +113,18 @@ def parse_sqlserverscript():
                 break
 
 
+def insert_data_batch(mariadb_conn, sql_stmt, values_list):
+
+    begin_time = time.time()
+    table_cursor = mariadb_conn.cursor()
+    total_count = table_cursor.executemany(sql_stmt, values_list)
+    mariadb_conn.commit()
+    table_cursor.close()
+    end_time = time.time()
+    print("共计插入%d条"+ total_count+"  共计花费时间:" + str(end_time-begin_time))
+    return total_count
+
+
 def insert_data(mariadb_conn, sql_stmt, values_list):
 
     begin_time = time.time()
@@ -123,6 +135,7 @@ def insert_data(mariadb_conn, sql_stmt, values_list):
     end_time = time.time()
     print("共计插入%d条"+ total_count+"  共计花费时间:" + str(end_time-begin_time))
     return total_count
+
 
 def main():
 
