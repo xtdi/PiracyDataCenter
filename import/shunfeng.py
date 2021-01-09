@@ -2,7 +2,7 @@ import time
 from mariadb.mariadb_manager import MariadbManager
 
 
-# 生产类似于（value1,value2,value3）的values值字符串
+# 生成类似于（value1,value2,value3）的values值字符串
 def build_insert_values(sqlserverscript):
 
     mysql_values_tuple = ()
@@ -20,6 +20,7 @@ def build_insert_values(sqlserverscript):
         temp_item_type = temp_item[0:temp_item.find("'")]
         if temp_item_type.upper() == 'N':
             temp_item = temp_item.replace("'", "")
+            temp_item = temp_item.strip()
             mysql_values_tuple = mysql_values_tuple + (temp_item[1:len(temp_item)],)
         else:
             print(temp_item_type)
@@ -77,23 +78,22 @@ def convert_insertsql(sqlserverscript):
 
 def parse_sqlserverscript():
 
-    mariadb_manager = MariadbManager("192.168.232.128", 3306, "privacydata", "root", "pmo@2016",  charset='GBK')
-    mariadb_manager.connect()
+    mariadb_manager = MariadbManager("192.168.232.128", 3306, "privacydata", "root", "pmo@2016",  charset="utf8mb4")
+    mariadb_manager.open_connect()
 
     insert_sql_stmt = "INSERT INTO shunfeng (name, phone, province, city, dist, addr)VALUES(%s,%s,%s,%s,%s,%s)"
 
-    file_full_path = r"D:\downloads\privacydata\shunfeng.sql"
-    with open(file_full_path, "r", encoding='utf16') as file_handle:
-        index = 0
+    file_full_path = r"D:\downloads\privacydata\shunfeng-utf8.sql"
+    with open(file_full_path, "r", encoding='utf8') as file_handle:
         inserted_num = 0
         datarow_list = []
         while True:
             try:
                 current_row = file_handle.readline()
                 if not current_row:
-                    temp_count = insert_data(mariadb_manager.connect, insert_sql_stmt, datarow_list)
+                    temp_count = batch_insert_data(mariadb_manager.connect, insert_sql_stmt, datarow_list)
                     inserted_num = inserted_num + temp_count
-                    print("已经插入数据%d行" % inserted_num)
+                    print("共计插入数据%d行" % inserted_num)
                     break
                 current_row = current_row.strip()
                 if len(current_row) < len("INSERT"):
@@ -103,38 +103,51 @@ def parse_sqlserverscript():
                     mysql_values_tuple = build_insert_values(current_row)
                     datarow_list.append(mysql_values_tuple)
                     if len(datarow_list) == 10000:
-                        insert_data(mariadb_manager.connect, insert_sql_stmt, datarow_list)
+                        temp_num = batch_insert_data(mariadb_manager.connect, insert_sql_stmt, datarow_list)
+                        # insert_data(mariadb_manager, datarow_list)
                         datarow_list.clear()
-                        inserted_num = inserted_num + 10000
-                        print("已经插入数据%d行" % inserted_num)
+                        inserted_num = inserted_num + temp_num
+                        print("共计插入数据%d行" % inserted_num)
             except Exception as ex:
                 print(ex)
                 print("已经插入数据%d行" % inserted_num)
                 break
 
 
-def insert_data_batch(mariadb_conn, sql_stmt, values_list):
+def batch_insert_data(mariadb_conn, sql_stmt, values_list):
 
     begin_time = time.time()
     table_cursor = mariadb_conn.cursor()
-    total_count = table_cursor.executemany(sql_stmt, values_list)
-    mariadb_conn.commit()
+    total_count = 0
+    try:
+        total_count = table_cursor.executemany(sql_stmt, values_list)
+        mariadb_conn.commit()
+    except Exception as ex:
+        print(ex)
+        tempname = values_list[7211][0]
+        mariadb_conn.rollback()
     table_cursor.close()
     end_time = time.time()
-    print("共计插入%d条"+ total_count+"  共计花费时间:" + str(end_time-begin_time))
+    spend_time = end_time-begin_time
+
+    print("本次插入数据%d条" % total_count+"  共计花费时间:%s秒" % format(spend_time, '0.2f'))
     return total_count
 
 
-def insert_data(mariadb_conn, sql_stmt, values_list):
+def insert_data(mariadb_manager, values_list):
 
-    begin_time = time.time()
-    table_cursor = mariadb_conn.cursor()
-    total_count = table_cursor.executemany(sql_stmt, values_list)
-    mariadb_conn.commit()
-    table_cursor.close()
-    end_time = time.time()
-    print("共计插入%d条"+ total_count+"  共计花费时间:" + str(end_time-begin_time))
-    return total_count
+    mysql_sql_prefix = "INSERT INTO shunfeng (name, phone, province, city, dist, addr)VALUES"
+    for i in range(len(values_list)):
+        row_value = values_list[i]
+        mysql_values_str = ""
+        for item_value in row_value:
+            mysql_values_str = mysql_values_str + "'"
+            mysql_values_str = mysql_values_str + item_value
+            mysql_values_str = mysql_values_str + "',"
+
+        temp_sql = mysql_sql_prefix + "(" + mysql_values_str[0:len(mysql_values_str) - 1] + ")"
+        print(temp_sql)
+        mariadb_manager.insert(temp_sql)
 
 
 def main():
