@@ -78,13 +78,14 @@ def convert_insertsql(sqlserverscript):
 
 def parse_sqlserverscript():
 
-    mariadb_manager = MariadbManager("192.168.232.128", 3306, "privacydata", "root", "pmo@2016",  charset="utf8mb4")
+    # mariadb_manager = MariadbManager("192.168.232.128", 3306, "privacydata", "root", "pmo@2016",  charset="utf8mb4")
+    mariadb_manager = MariadbManager("127.0.0.1", 3306, "privacydata", "root", "pmo@2016",  charset="utf8mb4")
     mariadb_manager.open_connect()
 
     insert_sql_stmt = "INSERT INTO shunfeng (name, phone, province, city, dist, addr)VALUES(%s,%s,%s,%s,%s,%s)"
 
-    file_full_path = r"D:\downloads\privacydata\shunfeng-utf8.sql"
-    with open(file_full_path, "r", encoding='utf8') as file_handle:
+    file_full_path = r"D:\downloads\privacydata\shunfeng.sql"
+    with open(file_full_path, "r", encoding='utf16') as file_handle:
         inserted_num = 0
         datarow_list = []
         while True:
@@ -125,6 +126,8 @@ def batch_insert_data(mariadb_conn, sql_stmt, values_list):
     except Exception as ex:
         print(ex)
         tempname = values_list[7211][0]
+        for j in tempname:
+            print(j)
         mariadb_conn.rollback()
     table_cursor.close()
     end_time = time.time()
@@ -153,9 +156,8 @@ def insert_data(mariadb_manager, values_list):
 def main():
 
     try:
-        temp=[(1,2,3),(3,4,5)]
-
-        parse_sqlserverscript()
+        # parse_sqlserverscript()
+        print()
         # convert_insertsql("INSERT [dbo].[Big_1_shunfeng] ([name], [phone], [province], [city], [dist], [addr]) VALUES (N'', N'0000000', N'四川省', N'南充市', N'顺庆区', N'四川省南充市顺庆区新政世纪明珠小区15幢2单元')")
     except Exception as ex:
         print(ex)

@@ -11,38 +11,48 @@ def parse_huji_excel(excel_full_path):
     print("总行数：" + str(excel_sheet.max_row))
     print("总列数：" + str(excel_sheet.max_column))
     insert_sql_pre = "INSERT INTO HUJI (STAT_TIME,STAT_NO,BIRTH_DATE,SEX,ID_NO,NMAE,PHONE,ADDRESS) VALUES ("
-
+    datarow_list = []
     row_num = 0
     for cur_row in excel_sheet.rows:
         row_num = row_num + 1
         item_value = "\""
         # cur_row[1]  统计时间
-        item_value = item_value + cur_row[1].value
+        temp_stat_time = cur_row[1].value.strip()
+        item_value = item_value + temp_stat_time
         item_value = item_value + "\",\""
         # cur_row[3]  编码编号
-        item_value = item_value + cur_row[3].value
+        temp_stat_no = cur_row[3].value.strip()
+        item_value = item_value + temp_stat_no
         item_value = item_value + "\",\""
         # cur_row[4]  出生日期
-        item_value = item_value + cur_row[4].value
+        temp_birth_date = cur_row[4].value.strip()
+        item_value = item_value + temp_birth_date
         item_value = item_value + "\",\""
         # cur_row[5]  性别
-        item_value = item_value + cur_row[5].value
+        temp_sex = cur_row[5].value.strip()
+        item_value = item_value + temp_sex
         item_value = item_value + "\",\""
         # cur_row[6] 身份证号
-        item_value = item_value + cur_row[6].value
+        temp_id_no = cur_row[6].value.strip()
+        item_value = item_value + temp_id_no
         item_value = item_value + "\",\""
         # cur_row[7] 姓名
-        item_value = item_value + cur_row[7].value
+        temp_name = cur_row[7].value.strip()
+        item_value = item_value + temp_name
         item_value = item_value + "\",\""
         # cur_row[8] 电话号码
-        item_value = item_value + cur_row[8].value
+        temp_phone = cur_row[8].value.strip()
+        item_value = item_value + temp_phone
         item_value = item_value + "\",\""
         # cur_row[9] 地址
-        item_value = item_value + cur_row[9].value
+        temp_address = cur_row[9].value.strip()
+        item_value = item_value + temp_address
         item_value = item_value + "\"）"
+
+        mysql_values_tuple = (temp_stat_time,temp_stat_no, temp_birth_date,
+                              temp_sex, temp_id_no, temp_name, temp_phone, temp_address)
+        datarow_list.append(mysql_values_tuple)
         # print( insert_sql_pre + item_value )
-
-
     print("文件入库完成，共入库数据"+str(0)+"条")
 
 def check_huji_file_format(full_path, column_header_list):
