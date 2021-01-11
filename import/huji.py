@@ -2,6 +2,8 @@ import openpyxl
 import time
 import os
 from mariadb.mariadb_manager import MariadbManager
+import datetime
+
 
 
 def parse_huji_excel(excel_full_path, mariadb_conn, insert_sql_stmt):
@@ -12,20 +14,20 @@ def parse_huji_excel(excel_full_path, mariadb_conn, insert_sql_stmt):
     print("总行数：" + str(excel_sheet.max_row))
     print("总列数：" + str(excel_sheet.max_column))
 
-    insert_sql_stmt = "INSERT INTO HUJI (STAT_TIME, STAT_NO, BIRTH_DATE, SEX, ID_NO, NMAE, PHONE, ADDRESS)"
-    insert_sql_stmt = insert_sql_stmt + " VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
     datarow_list = []
     row_num = 0
     for cur_row in excel_sheet.rows:
         row_num = row_num + 1
-        temp_stat_time = cur_row[2].value.strip()   # cur_row[2]  统计时间
-        temp_stat_no = cur_row[4].value.strip()     # cur_row[4]  编码编号
-        temp_birth_date = cur_row[5].value.strip()  # cur_row[5]  出生日期
-        temp_sex = cur_row[6].value.strip()         # cur_row[6]  性别
-        temp_id_no = cur_row[7].value.strip()       # cur_row[7]  身份证号
-        temp_name = cur_row[8].value.strip()        # cur_row[8]  姓名
-        temp_phone = cur_row[9].value.strip()       # cur_row[9]  电话号码
-        temp_address = cur_row[10].value.strip()     # cur_row[10]  地址
+        if row_num == 1:
+            continue
+        temp_stat_time = cur_row[1].value.strip()   # cur_row[2]  统计时间
+        temp_stat_no = cur_row[3].value.strip()     # cur_row[4]  编码编号
+        temp_birth_date = cur_row[4].value.strip()  # cur_row[5]  出生日期
+        temp_sex = cur_row[5].value.strip()         # cur_row[6]  性别
+        temp_id_no = cur_row[6].value.strip()       # cur_row[7]  身份证号
+        temp_name = cur_row[7].value.strip()        # cur_row[8]  姓名
+        temp_phone = str(cur_row[8].value).strip()       # cur_row[9]  电话号码
+        temp_address = cur_row[9].value.strip()     # cur_row[10]  地址
 
         if len(temp_phone) == 0:
             print("用户的电话号码为空，本条数据跳过" % temp_name)
@@ -34,7 +36,7 @@ def parse_huji_excel(excel_full_path, mariadb_conn, insert_sql_stmt):
         mysql_values_tuple = (temp_stat_time, temp_stat_no, temp_birth_date,
                               temp_sex, temp_id_no, temp_name, temp_phone, temp_address)
         datarow_list.append(mysql_values_tuple)
-        if len(datarow_list) == 10000:
+        if len(datarow_list) == 1:
             temp_num = batch_insert_data(mariadb_conn, insert_sql_stmt, datarow_list)
             inserted_num = inserted_num + temp_num
             datarow_list.clear()
@@ -94,7 +96,7 @@ def check_huji_file_format(full_path, column_header_list):
         temp_phone = excel_sheet.cell(2, 9).value.strip()  # cur_row[8]  电话号码
         if len(temp_id_no) != 15:
             if len(temp_id_no) != 18:
-                print("身份证格式有误:%s" %temp_id_no)
+                print("身份证格式有误:%s" % temp_id_no)
 
     else:
         print("文件:" + full_path + " 的行数为空，请检查！")
@@ -104,7 +106,8 @@ def parse_all_huji_data():
 
     mariadb_manager = MariadbManager("127.0.0.1", 3306, "privacydata", "root", "pmo@2016",  charset="utf8mb4")
     mariadb_manager.open_connect()
-
+    insert_sql_stmt = "INSERT INTO HUJI (STAT_TIME, STAT_NO, BIRTH_DATE, SEX, ID_NO, NAME, PHONE, ADDRESS)"
+    insert_sql_stmt = insert_sql_stmt + " VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
     column_header = ["所属户籍站", "统计时间", "居住地址", "编码编号", "出生日期", "性别", "身份证", "名字", "手机号", "地址", "编码", "编码"]
     rootdir = r"D:\downloads\privacydata\huji"
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
@@ -114,8 +117,8 @@ def parse_all_huji_data():
         if os.path.isfile(file_path):
             file_num = file_num + 1
             print("开始第"+ str(file_num) + "文件:" + file_path + "！")
-            check_huji_file_format(file_path, column_header)
-            # parse_huji_excel(file_path)
+            # check_huji_file_format(file_path, column_header)
+            parse_huji_excel(file_path, mariadb_manager.connect, insert_sql_stmt)
             print()
 
 def main():
