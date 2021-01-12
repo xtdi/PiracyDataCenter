@@ -3,7 +3,7 @@ import time
 
 def parse_jingdong_data():
 
-    file_full_path = r"D:\Downloads\www_jd_com_12g.txt"
+    file_full_path = r"D:\Downloads\jingdong.txt"
     insert_sql_pre = "INSERT INTO HUJI (NAME,LOGIN_NAME,EMAIL,ID_NO,PHONE,TELEPHONE) VALUES ("
     with open(file_full_path, "r", encoding="utf16") as file_handle:
         index = 0
