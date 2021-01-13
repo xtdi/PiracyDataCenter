@@ -50,11 +50,11 @@ def parse_huji_excel(excel_full_path, mariadb_conn, insert_sql_stmt):
             temp_phone = temp_phone.replace("'", "")
 
         if len(temp_id_no) > 30:
-            print()
+            print(str(row_num) + "身份证号码长度大于30:%s" % temp_id_no)
         if len(temp_phone) > 30:
-            print()
+            print(str(row_num) + " " + temp_id_no + "手机号码长度大于30:%s" % temp_phone)
         if len(temp_address) > 300:
-            print()
+            print(str(row_num) + " " + temp_id_no + "地址长度大于30:%s" % temp_address)
         if len(temp_phone) == 0:
             phone_is_null_num = phone_is_null_num +1
             # print(temp_stat_time + "用户:%s 的电话号码为空，本条数据跳过" % temp_name)
@@ -174,8 +174,7 @@ def parse_all_huji_data():
             file_num = file_num + 1
             print("开始第" + str(file_num) + "文件:" + file_path + "！")
             # if file_path == r"D:\downloads\privacydata\huji\1 - 副本 (18).xlsx":
-            if file_num < 49:
-                continue
+
             # check_huji_file_format(file_path, column_header)
             parse_huji_excel(file_path, mariadb_manager.connect, insert_sql_stmt)
 
