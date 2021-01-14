@@ -225,6 +225,7 @@ def is_all_chinese(strs):
 def handle_mobilephone_records():
 
     baijiaxing = Baijiaxing()
+    baijiaxing.merget_data()
 
     file_full_path = r"D:\FFOutput\has_phone.txt"
     with open(file_full_path, "r") as file_handle:

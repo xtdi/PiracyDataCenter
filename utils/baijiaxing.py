@@ -20,3 +20,18 @@ class Baijiaxing(object):
             return False
 
 
+    def merget_data(self):
+        file_path = "D:\\FFOutput\\中国姓氏大全包含2200个单姓.txt"
+        with open(file_path, "r", encoding="utf8") as file_handle:
+            while True:
+                try:
+                    cur_row = file_handle.readline()
+                    if not cur_row:
+                        break
+                    cur_row = cur_row.replace("\t", "")
+                    
+                except Exception as ex:
+                    print(ex)
+                    print("程序异常退出" )
+                    break
+
