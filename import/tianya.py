@@ -34,10 +34,38 @@ def parse_each_txt(txtfile_full_path, mariadb_conn, insert_sql_stmt):
                         invalid_format_rows_list.clear()
                     break
 
-                temp_login_name = ""
-                temp_password = ""
-                temp_email = ""
+                current_row = current_row.strip()
+                if len(current_row) == 0:
+                    continue
 
+                item_list = []
+                split_char = ""
+                first_blank_pos = current_row.find(" ")
+                first_douhao_pos = current_row.find(",")
+                if first_blank_pos > 0:
+                    split_char = " "
+                else:
+                    if first_douhao_pos > 0:
+                        split_char = ","
+                    else:
+                        print("无法确认分隔符：" + current_row)
+                        invalid_format_rows_num = invalid_format_rows_num + 1
+                        invalid_format_rows_list.append(current_row)
+                        continue
+
+                temp_all_list = current_row.split(split_char)
+                for i in range(len(temp_all_list)):
+                    if len(temp_all_list[i].strip()) > 0:
+                        item_list.append(temp_all_list[i].strip())
+                if len(item_list) != 3:
+                    print("数据项不足三项："+current_row)
+                    invalid_format_rows_num = invalid_format_rows_num + 1
+                    invalid_format_rows_list.append(current_row)
+                    continue
+
+                temp_login_name = item_list[0]
+                temp_password = item_list[1]
+                temp_email = item_list[2]
                 mysql_values_tuple = (temp_login_name, temp_password, temp_email)
                 datarow_list.append(mysql_values_tuple)
                 if len(datarow_list) == 10000:
@@ -56,7 +84,7 @@ def parse_each_txt(txtfile_full_path, mariadb_conn, insert_sql_stmt):
 
 def batch_insert_data(mariadb_conn, sql_stmt, values_list):
 
-    # return len(values_list)
+    return len(values_list)
 
     begin_time = time.time()
     table_cursor = mariadb_conn.cursor()
@@ -84,7 +112,7 @@ def parse_all_files():
     mariadb_manager.open_connect()
     insert_sql_stmt = "INSERT INTO tianya (login_name, password, email)"
     insert_sql_stmt = insert_sql_stmt + " VALUES (%s, %s, %s)"
-    rootdir = r"D:\downloads\privacydata\tianya"
+    rootdir = r"D:\downloads\privacydata\tianya-new"
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     file_num = 0
     for i in range(0, len(list)):
@@ -94,7 +122,7 @@ def parse_all_files():
             print("开始第" + str(file_num) + "文件:" + file_path + "！")
             # if file_path == r"D:\downloads\privacydata\huji\1 - 副本 (18).xlsx":
 
-            # parse_huji_excel(file_path, mariadb_manager.connect, insert_sql_stmt)
+            parse_each_txt(file_path, mariadb_manager.connect, insert_sql_stmt)
 
 
 def main():
