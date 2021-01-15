@@ -1,5 +1,6 @@
 import json
 import os
+import copy
 
 class Baijiaxing(object):
     # 初始化方法
@@ -22,6 +23,10 @@ class Baijiaxing(object):
 
     def merget_data(self):
         file_path = "D:\\FFOutput\\中国姓氏大全包含2200个单姓.txt"
+        need_add_list = []
+        need_add_num = 0
+        existed_num = 0
+        total_num = 0
         with open(file_path, "r", encoding="utf8") as file_handle:
             while True:
                 try:
@@ -29,9 +34,31 @@ class Baijiaxing(object):
                     if not cur_row:
                         break
                     cur_row = cur_row.replace("\t", "")
-                    
+
+                    for everyChar in cur_row:
+                        total_num = total_num + 1
+                        cur_char = everyChar.strip()
+                        if len(cur_char) > 0:
+                            if cur_char in self.baijiaxinglist:
+                                existed_num = existed_num+1
+                            else:
+                                need_add_list.append(cur_char)
+                                need_add_num = need_add_num + 1
+
                 except Exception as ex:
                     print(ex)
                     print("程序异常退出" )
                     break
 
+        print("总数量:%d" % total_num + ",已经存在数量：%d" % existed_num + ",需要增加数量:%d" % need_add_num)
+        for i in range(len(need_add_list)):
+            self.baijiaxinglist.append(need_add_list[i])
+
+        pythonjson = {}
+        pythonjson["list"] = self.baijiaxinglist
+        with open("D:\\FFOutput\\json_test.txt", 'w', encoding="utf8") as f:
+            # json.dump(pythonjson, f)
+            temp_result = json.dumps(pythonjson, ensure_ascii=False, indent=4)
+            f.write(temp_result)
+
+        print()

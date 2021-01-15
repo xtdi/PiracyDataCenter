@@ -225,7 +225,6 @@ def is_all_chinese(strs):
 def handle_mobilephone_records():
 
     baijiaxing = Baijiaxing()
-    baijiaxing.merget_data()
 
     file_full_path = r"D:\FFOutput\has_phone.txt"
     with open(file_full_path, "r") as file_handle:
@@ -248,7 +247,7 @@ def handle_mobilephone_records():
                           + ", 其他%d行" % other_rows_num)
                     print("has_phone_list_list:据%d行" % len(has_phone_list)
                           + ",other_list:%d行" % len(other_list))
-                    with open("D:/FFOutput/valid.txt", "w") as has_phone_file:
+                    with open("D:/FFOutput/valid.txt", "w",encoding="utf8") as has_phone_file:
                         has_phone_file.writelines(has_phone_list)
                     with open("D:/FFOutput/other.txt", "w") as f:
                         f.writelines(other_list)
@@ -309,11 +308,88 @@ def handle_mobilephone_records():
                 print("程序异常退出，已经插入数据%d行" % total_rows)
                 break
 
+def save_other_records():
+
+    mariadb_manager = MariadbManager("127.0.0.1", 3306, "privacydata", "root", "pmo@2016",  charset="utf8mb4")
+    mariadb_manager.open_connect()
+    baijiaxing = Baijiaxing()
+
+    file_full_path = r"D:\FFOutput\jingdong-buchongshuju.txt"
+    datarow_list = []
+    inserted_num = 0
+    tuangou_num = 0
+    insert_sql_stmt = "INSERT INTO jingdong (NAME,LOGIN_NAME,EMAIL,ID_NO,PHONE,TELEPHONE) VALUES(%s,%s,%s,%s,%s,%s)"
+
+    with open(file_full_path, "r", encoding="utf8") as file_handle:
+        total_rows = 0
+        while True:
+            try:
+                total_rows = total_rows + 1
+
+                current_row = file_handle.readline()
+                if not current_row:
+
+                    temp_count = batch_insert_data(mariadb_manager.connect, insert_sql_stmt, datarow_list)
+                    inserted_num = inserted_num + temp_count
+                    datarow_list.clear()
+                    print("文件读取完成，共读取数据%d行" % (total_rows - 1) + ",插入%d行" % inserted_num)
+                    print("团购订单数量%d"% tuangou_num)
+                    break
+
+                current_row = current_row.replace("\\N", "")
+                item_list = current_row.split("---")
+                temp_name = item_list[0].strip()
+
+                if temp_name.find("团购") >= 0:
+                    tuangou_num = tuangou_num + 1
+                    continue
+
+                temp_login_name = item_list[1].strip()  # 登录用户
+                temp_email = ""
+                temp_phone = ""
+                temp_id_no = ""
+                for i in range(len(item_list)):
+                    if i < 2:
+                        continue
+
+                    if len(item_list[i].strip()) == 0:
+                        continue
+
+                    #判断是不是手机号字段
+                    if len(item_list[i].strip()) == 11:
+                        try:
+                            temp_int = int(item_list[i].strip())
+                            if len(str(temp_int)) == 11:
+                                temp_phone = str(temp_int)
+                        except Exception as me:
+                            temp_phone = ""
+
+                    #判断是不是电子邮箱
+                    if item_list[i].strip().find("@") > 0:
+                        temp_email = item_list[i].strip()
+
+                    if len(item_list[i].strip()) == 15 or len(item_list[i].strip()) == 18:
+                        temp_id_no = item_list[i].strip()
+
+                temp_telephone = ""
+
+                mysql_values_tuple = (temp_name, temp_login_name, temp_email, temp_id_no, temp_phone, temp_telephone)
+                datarow_list.append(mysql_values_tuple)
+                if len(datarow_list) == 100000:
+                    temp_num = batch_insert_data(mariadb_manager.connect, insert_sql_stmt, datarow_list)
+                    inserted_num = inserted_num + temp_num
+                    datarow_list.clear()
+                    print("共计插入数据" + str(inserted_num) + "行")
+
+            except Exception as ex:
+                print(ex)
+                print("程序异常退出，已经插入数据%d行" % total_rows)
+                break
 
 def main():
 
     try:
-        handle_mobilephone_records()
+        save_other_records()
         # parse_jingdong_data()
     except Exception as ex:
         print(ex)
