@@ -5,12 +5,13 @@ from mariadb.mariadb_manager import MariadbManager
 
 def parse_each_txt(txtfile_full_path, mariadb_conn, insert_sql_stmt):
 
-    invalid_records_file_path = r"D:\itianya_invalid_format_records.txt"
+    invalid_records_file_path = r"D:\tianya_invalid_format_records.txt"
 
     with open(txtfile_full_path, "r", encoding="utf8") as file_handle:
         total_rows = 0
         inserted_num = 0
         datarow_list = []
+        blank_rows_num = 0
         invalid_format_rows_list = []
         invalid_format_rows_num = 0
         while True:
@@ -27,15 +28,19 @@ def parse_each_txt(txtfile_full_path, mariadb_conn, insert_sql_stmt):
                     temp_count = batch_insert_data(mariadb_conn, insert_sql_stmt, datarow_list)
                     inserted_num = inserted_num + temp_count
                     datarow_list.clear()
-                    print("文件读取完成，共计插入数据%d行" % inserted_num)
-                    print("invalid_format_rows_num:%d行" % invalid_format_rows_num)
-                    with open(invalid_records_file_path, "a", "utf8") as f:
+                    # print("文件读取完成，共计读取数据%d行" % (total_rows-1)  + ",其中：插入数据：%d行" % inserted_num)
+                    # print("格式无效数据:%d行" % invalid_format_rows_num)
+                    # print("空数据:%d行" % blank_rows_num)
+
+                    with open(invalid_records_file_path, "a", encoding="utf8") as f:
+                        f.write("-----" + txtfile_full_path + "\n")
                         f.writelines(invalid_format_rows_list)
                         invalid_format_rows_list.clear()
                     break
 
                 current_row = current_row.strip()
                 if len(current_row) == 0:
+                    blank_rows_num = blank_rows_num + 1
                     continue
 
                 item_list = []
@@ -51,19 +56,18 @@ def parse_each_txt(txtfile_full_path, mariadb_conn, insert_sql_stmt):
                     if first_douhao_pos > 0:
                         split_char = ","
                     else:
-                        print("无法确认分隔符：" + current_row)
+                        print("(" + str(total_rows) + ") 行无法确认分隔符：" + current_row)
                         invalid_format_rows_num = invalid_format_rows_num + 1
-                        invalid_format_rows_list.append(current_row)
+                        invalid_format_rows_list.append(current_row + "\n")
                         continue
-
                 temp_all_list = current_row.split(split_char)
                 for i in range(len(temp_all_list)):
                     if len(temp_all_list[i].strip()) > 0:
                         item_list.append(temp_all_list[i].strip())
                 if len(item_list) != 3:
-                    print("数据项不足三项："+current_row)
+                    # print("数据项不足三项："+current_row)
                     invalid_format_rows_num = invalid_format_rows_num + 1
-                    invalid_format_rows_list.append(current_row)
+                    invalid_format_rows_list.append(current_row + "\n")
                     continue
 
                 temp_login_name = item_list[0]
@@ -75,11 +79,16 @@ def parse_each_txt(txtfile_full_path, mariadb_conn, insert_sql_stmt):
                     temp_num = batch_insert_data(mariadb_conn, insert_sql_stmt, datarow_list)
                     inserted_num = inserted_num + temp_num
                     datarow_list.clear()
-                    print("共计插入数据%d行" % inserted_num)
+                    # print("共计插入数据%d行" % inserted_num)
             except Exception as ex:
                 print(ex)
                 print("程序异常退出，已经插入数据%d行" % inserted_num)
                 break
+
+    return_result_str = "文件共计:" + str(total_rows - 1) + "行，其中插入数据:" + str(inserted_num)
+    return_result_str = return_result_str + "行，格式无效数据:" + str(invalid_format_rows_num)
+    return_result_str = return_result_str + "行，空数据:" + str(blank_rows_num) + "行"
+    return return_result_str
 
 
 def batch_insert_data(mariadb_conn, sql_stmt, values_list):
@@ -104,15 +113,19 @@ def batch_insert_data(mariadb_conn, sql_stmt, values_list):
 
 def parse_all_files():
 
-    invalid_records_file_path = r"D:\itianya_invalid_format_records.txt"
+    invalid_records_file_path = r"D:\tianya_invalid_format_records.txt"
     with open(invalid_records_file_path, "w", encoding="utf-8") as file:
+        print("初始化格式不规范文件")
+
+    tianya_log_file_path = r"D:\tianya_log.txt"
+    with open(tianya_log_file_path, "w", encoding="utf-8") as logfile:
         print("初始化日志文件")
 
     mariadb_manager = MariadbManager("127.0.0.1", 3306, "privacydata", "root", "pmo@2016",  charset="utf8mb4")
     mariadb_manager.open_connect()
     insert_sql_stmt = "INSERT INTO tianya (login_name, password, email)"
     insert_sql_stmt = insert_sql_stmt + " VALUES (%s, %s, %s)"
-    rootdir = r"D:\downloads\privacydata\tianya-new\temp"
+    rootdir = r"D:\downloads\privacydata\tianya-new"
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     file_num = 0
     for i in range(0, len(list)):
@@ -121,7 +134,11 @@ def parse_all_files():
             file_num = file_num + 1
             print("开始第" + str(file_num) + "文件:" + file_path + "！")
             # if file_path == r"D:\downloads\privacydata\huji\1 - 副本 (18).xlsx":
-            parse_each_txt(file_path, mariadb_manager.connect, insert_sql_stmt)
+            finised_info = parse_each_txt(file_path, mariadb_manager.connect, insert_sql_stmt)
+            with open(tianya_log_file_path, "a", encoding="utf-8") as logfile:
+                write_info = "完成第%d个文件（" % file_num + file_path + ")的数据插入，完成信息:" + finised_info + " \n"
+                print("完成第%d个文件（" % file_num + file_path + ")的数据插入，完成信息:" + finised_info + " \n")
+                logfile.write(write_info + "\n" )
 
 
 def main():
