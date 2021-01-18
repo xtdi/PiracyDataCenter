@@ -26,9 +26,11 @@ def parse_data():
                 if not current_row:
                     temp_count = batch_insert_data(mariadb_manager.connect, insert_sql_stmt, datarow_list)
                     inserted_num = inserted_num + temp_count
+                    print("文件读取完成，物理行共计%d行" % (total_rows-1))
                     print("共计插入数据%d行" % inserted_num)
                     print("无效数据%d行" % invalid_rows_num)
-                    print("三项数据中QQ数据相等的数据记录数：行"% len(sameqq_item_list))
+                    print("空数据%d行" % row_content_null_num)
+                    print("三项数据中QQ数据相等的数据记录数：行" % len(sameqq_item_list))
                     with open(r"D:\qq_invalid_rows.txt", "w", encoding="utf8") as f:
                         f.writelines(invalid_rows_list)
                         invalid_rows_list.clear()
@@ -39,9 +41,9 @@ def parse_data():
 
                 current_row = current_row.strip()
                 if len(current_row) == 0:
-                    invalid_rows_num = invalid_rows_num + 1
+                    # invalid_rows_num = invalid_rows_num + 1
+                    # invalid_rows_list.append(current_row + "\n")
                     row_content_null_num = row_content_null_num + 1
-                    invalid_rows_list.append(current_row + "\n")
                     continue
 
                 item_list = current_row.split("----")
@@ -102,24 +104,27 @@ def parse_multiqq_data():
     insert_sql_stmt = "INSERT INTO qq (phone, uid, has_multi_qq)VALUES(%s,%s,%s)"
 
     file_full_path = r"D:\qq_invalid_rows.txt"
-    with open(file_full_path, "r") as file_handle:
+    with open(file_full_path, "r", encoding="utf8") as file_handle:
         inserted_num = 0
         datarow_list = []
         total_rows = 0
         invalid_rows_num = 0
         invalid_rows_list = []
+        row_content_null_num = 0
+        before_rows_num = 0
         while True:
             try:
                 total_rows = total_rows + 1
                 if total_rows % 10000 == 0:
                     print("已经读取行数%d" % total_rows)
-
                 current_row = file_handle.readline()
                 if not current_row:
                     temp_count = batch_insert_data(mariadb_manager.connect, insert_sql_stmt, datarow_list)
                     inserted_num = inserted_num + temp_count
+                    print("设计需要分解的原始数据%d行" % before_rows_num)
                     print("共计插入数据%d行" % inserted_num)
                     print("无效数据%d行" % invalid_rows_num)
+                    print("空数据%d行" % row_content_null_num)
                     with open(r"D:\qq_other_rows.txt", "w", encoding="utf8") as f:
                         f.writelines(invalid_rows_list)
                         invalid_rows_list.clear()
@@ -127,13 +132,13 @@ def parse_multiqq_data():
 
                 current_row = current_row.strip()
                 if len(current_row) == 0:
-                    invalid_rows_num = invalid_rows_num + 1
-                    invalid_rows_list.append(current_row + "(row-null)\n")
+                    row_content_null_num = row_content_null_num + 1
                     continue
 
                 item_list = current_row.split("----")
 
                 if len(item_list) == 3:
+                    before_rows_num = before_rows_num +1
                     first_mysql_values_tuple = (item_list[2], item_list[0], 1)
                     second_mysql_values_tuple = (item_list[2], item_list[1], 1)
                     datarow_list.append(first_mysql_values_tuple)
@@ -158,8 +163,8 @@ def parse_multiqq_data():
 def main():
 
     try:
-        # parse_data()
-        parse_multiqq_data()
+        parse_data()
+        # parse_multiqq_data()
     except Exception as ex:
         print(ex)
 
