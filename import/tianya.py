@@ -5,7 +5,7 @@ from mariadb.mariadb_manager import MariadbManager
 
 def parse_each_txt(txtfile_full_path, mariadb_conn, insert_sql_stmt):
 
-    logfile_path = r"D:\tianya-log.txt"
+    invalid_records_file_path = r"D:\itianya_invalid_format_records.txt"
 
     with open(txtfile_full_path, "r", encoding="utf8") as file_handle:
         total_rows = 0
@@ -18,7 +18,7 @@ def parse_each_txt(txtfile_full_path, mariadb_conn, insert_sql_stmt):
                 total_rows = total_rows + 1
 
                 if len(invalid_format_rows_list) == 10000:
-                    with open("D:\invalid_format_records.txt", "a") as f:
+                    with open(invalid_records_file_path, "a", "utf8") as f:
                         f.writelines(invalid_format_rows_list)
                         invalid_format_rows_list.clear()
 
@@ -28,8 +28,8 @@ def parse_each_txt(txtfile_full_path, mariadb_conn, insert_sql_stmt):
                     inserted_num = inserted_num + temp_count
                     datarow_list.clear()
                     print("文件读取完成，共计插入数据%d行" % inserted_num)
-
-                    with open("D:\invalid_format_records.txt", "a") as f:
+                    print("invalid_format_rows_num:%d行" % invalid_format_rows_num)
+                    with open(invalid_records_file_path, "a", "utf8") as f:
                         f.writelines(invalid_format_rows_list)
                         invalid_format_rows_list.clear()
                     break
@@ -43,7 +43,10 @@ def parse_each_txt(txtfile_full_path, mariadb_conn, insert_sql_stmt):
                 first_blank_pos = current_row.find(" ")
                 first_douhao_pos = current_row.find(",")
                 if first_blank_pos > 0:
-                    split_char = " "
+                    if current_row.count(",") == 2:
+                        split_char = ","
+                    else:
+                        split_char = " "
                 else:
                     if first_douhao_pos > 0:
                         split_char = ","
@@ -75,11 +78,8 @@ def parse_each_txt(txtfile_full_path, mariadb_conn, insert_sql_stmt):
                     print("共计插入数据%d行" % inserted_num)
             except Exception as ex:
                 print(ex)
-                print("程序异常退出，已经插入数据%d行" % total_rows)
+                print("程序异常退出，已经插入数据%d行" % inserted_num)
                 break
-
-    with open(logfile_path, "w") as file:
-        file.write(logfile_path + "  文件入库完成，共入库数据"+str(inserted_num)+"行,因电话号码空没有插入的数据条数为：" + "\n")
 
 
 def batch_insert_data(mariadb_conn, sql_stmt, values_list):
@@ -104,15 +104,15 @@ def batch_insert_data(mariadb_conn, sql_stmt, values_list):
 
 def parse_all_files():
 
-    logfile_path = r"D:\tianya-log.txt"
-    with open(logfile_path, "w", encoding="utf-8") as file:
+    invalid_records_file_path = r"D:\itianya_invalid_format_records.txt"
+    with open(invalid_records_file_path, "w", encoding="utf-8") as file:
         print("初始化日志文件")
 
     mariadb_manager = MariadbManager("127.0.0.1", 3306, "privacydata", "root", "pmo@2016",  charset="utf8mb4")
     mariadb_manager.open_connect()
     insert_sql_stmt = "INSERT INTO tianya (login_name, password, email)"
     insert_sql_stmt = insert_sql_stmt + " VALUES (%s, %s, %s)"
-    rootdir = r"D:\downloads\privacydata\tianya-new"
+    rootdir = r"D:\downloads\privacydata\tianya-new\temp"
     list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     file_num = 0
     for i in range(0, len(list)):
@@ -121,7 +121,6 @@ def parse_all_files():
             file_num = file_num + 1
             print("开始第" + str(file_num) + "文件:" + file_path + "！")
             # if file_path == r"D:\downloads\privacydata\huji\1 - 副本 (18).xlsx":
-
             parse_each_txt(file_path, mariadb_manager.connect, insert_sql_stmt)
 
 
