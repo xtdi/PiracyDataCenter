@@ -1,6 +1,7 @@
 import time
 from mariadb.mariadb_manager import MariadbManager
 
+
 def parse_data():
 
     mariadb_manager = MariadbManager("127.0.0.1", 3306, "privacydata", "root", "pmo@2016",  charset="utf8mb4")
@@ -26,11 +27,11 @@ def parse_data():
                 if not current_row:
                     temp_count = batch_insert_data(mariadb_manager.connect, insert_sql_stmt, datarow_list)
                     inserted_num = inserted_num + temp_count
-                    print("文件读取完成，物理行共计%d行" % (total_rows-1))
-                    print("共计插入数据%d行" % inserted_num)
+                    # print("文件读取完成，物理行共计%d行" % (total_rows-1))
+                    print("共计插入数据%d行" % inserted_num + ",已经读取行数%d" % (total_rows-1))
                     print("无效数据%d行" % invalid_rows_num)
                     print("空数据%d行" % row_content_null_num)
-                    print("三项数据中QQ数据相等的数据记录数：行" % len(sameqq_item_list))
+                    print("三项数据中QQ数据相等的数据记录数：%d行" % len(sameqq_item_list))
                     with open(r"D:\qq_invalid_rows.txt", "w", encoding="utf8") as f:
                         f.writelines(invalid_rows_list)
                         invalid_rows_list.clear()
@@ -41,9 +42,8 @@ def parse_data():
 
                 current_row = current_row.strip()
                 if len(current_row) == 0:
-                    # invalid_rows_num = invalid_rows_num + 1
-                    # invalid_rows_list.append(current_row + "\n")
                     row_content_null_num = row_content_null_num + 1
+                    print("----------------------------------空行------------------")
                     continue
 
                 item_list = current_row.split("----")
@@ -69,7 +69,14 @@ def parse_data():
                     temp_num = batch_insert_data(mariadb_manager.connect, insert_sql_stmt, datarow_list)
                     inserted_num = inserted_num + temp_num
                     datarow_list.clear()
-                    # print("共计插入数据%d行" % inserted_num)
+
+                    buyizhi = ""
+                    temp_he = inserted_num + invalid_rows_num + row_content_null_num
+                    if temp_he != total_rows:
+                        buyizhi = "-------------不一致，差" + str(total_rows-temp_he)
+                    print("已经插入数据共计:%d行" % inserted_num + ",已经读取物理行共计:%d" % total_rows
+                          + ", 无效行数据共计:%d行" % invalid_rows_num + ",空行数据共计:%d行!" % row_content_null_num
+                          + ", " + buyizhi)
 
             except Exception as ex:
                 print(ex)
@@ -93,7 +100,7 @@ def batch_insert_data(mariadb_conn, sql_stmt, values_list):
     table_cursor.close()
     end_time = time.time()
     spend_time = end_time-begin_time
-    print("本次插入数据%d条" % total_count+"  共计花费时间:%s秒" % format(spend_time, '0.2f'))
+    # print("本次插入数据%d条" % total_count+"  共计花费时间:%s秒" % format(spend_time, '0.2f'))
     return total_count
 
 

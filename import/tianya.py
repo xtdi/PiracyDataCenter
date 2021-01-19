@@ -70,9 +70,31 @@ def parse_each_txt(txtfile_full_path, mariadb_conn, insert_sql_stmt):
                     invalid_format_rows_list.append(current_row + "\n")
                     continue
 
-                temp_login_name = item_list[0]
-                temp_password = item_list[1]
-                temp_email = item_list[2]
+                temp_login_name = item_list[0].strip()
+                temp_password = item_list[1].strip()
+                temp_email = item_list[2].strip()
+
+                if temp_email.find("@") == -1:
+                    invalid_format_rows_num = invalid_format_rows_num + 1
+                    invalid_format_rows_list.append(current_row + "\n")
+                    continue
+
+                if temp_email.find("<") >= 0 and temp_email.find(">") > 0:
+                    temp_first_pos = temp_email.find("<")
+                    temp_two_pos = temp_email.find(">")
+                    if temp_first_pos > 0:
+                        print(temp_email)
+                    temp_email = temp_email[temp_first_pos+1:temp_two_pos-temp_first_pos]
+
+                if temp_email.find("<") >= 0:
+                    temp_email = temp_email.replace("<", "")
+                if temp_email.find(">") >= 0:
+                    temp_email = temp_email.replace(">", "")
+                if temp_email.find("；") >= 0:
+                    temp_email = temp_email.replace("；", "")
+                if temp_email.find("意见反馈") >= 0 or temp_email.find("帮助中心") >= 0 or temp_email.find("退出") >= 0:
+                    print(item_list[2].strip())
+
                 mysql_values_tuple = (temp_login_name, temp_password, temp_email)
                 datarow_list.append(mysql_values_tuple)
                 if len(datarow_list) == 10000:
