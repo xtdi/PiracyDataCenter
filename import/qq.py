@@ -4,7 +4,8 @@ from mariadb.mariadb_manager import MariadbManager
 
 def parse_data():
 
-    mariadb_manager = MariadbManager("127.0.0.1", 3306, "privacydata", "root", "pmo@2016",  charset="utf8mb4")
+    # mariadb_manager = MariadbManager("127.0.0.1", 3306, "privacydata", "root", "pmo@2016",  charset="utf8mb4")
+    mariadb_manager = MariadbManager("192.168.1.116", 3308, "privacydata", "root", "Springdawn@2016", charset="utf8mb4")
     mariadb_manager.open_connect()
     insert_sql_stmt = "INSERT INTO qq (phone, uid)VALUES(%s,%s)"
 
@@ -66,6 +67,21 @@ def parse_data():
                     continue
 
                 if len(datarow_list) == 100000:
+
+                    """
+                    too_long_str = ""
+                    temp_max_long_len = 0
+                    temp_max_long_uid = ""
+                    for num in range(len(datarow_list)):
+                        cur_temp_uid = datarow_list[num][1]
+                        cur_temp_phone_len = len(datarow_list[num][0])
+                        if cur_temp_phone_len > temp_max_long_len:
+                            temp_max_long_len = cur_temp_phone_len
+                            temp_max_long_uid = cur_temp_uid
+                            too_long_str = "----------------------------------------" + temp_max_long_uid + ":" + str(temp_max_long_len)
+                    print("开始本批插入，本批第一项数据为:" + datarow_list[0][1] + "-" + datarow_list[0][0] + "." + too_long_str)
+                    """
+
                     temp_num = batch_insert_data(mariadb_manager.connect, insert_sql_stmt, datarow_list)
                     inserted_num = inserted_num + temp_num
                     datarow_list.clear()
@@ -128,7 +144,7 @@ def parse_multiqq_data():
                 if not current_row:
                     temp_count = batch_insert_data(mariadb_manager.connect, insert_sql_stmt, datarow_list)
                     inserted_num = inserted_num + temp_count
-                    print("设计需要分解的原始数据%d行" % before_rows_num)
+                    print("涉及需要分解的原始数据%d行" % before_rows_num)
                     print("共计插入数据%d行" % inserted_num)
                     print("无效数据%d行" % invalid_rows_num)
                     print("空数据%d行" % row_content_null_num)
