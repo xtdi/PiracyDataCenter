@@ -98,6 +98,21 @@ def parse_each_txt(txtfile_full_path, mariadb_conn, insert_sql_stmt):
                 mysql_values_tuple = (temp_login_name, temp_password, temp_email)
                 datarow_list.append(mysql_values_tuple)
                 if len(datarow_list) == 10000:
+
+
+                    too_long_str = ""
+                    temp_max_long_len = 0
+                    temp_max_long_uid = ""
+                    for num in range(len(datarow_list)):
+                        cur_temp_uid = datarow_list[num][0]
+                        cur_temp_phone_len = len(datarow_list[num][2])
+                        if cur_temp_phone_len > temp_max_long_len:
+                            temp_max_long_len = cur_temp_phone_len
+                            temp_max_long_uid = cur_temp_uid
+                            too_long_str = "----------------------------------------" + temp_max_long_uid + ":" + str(temp_max_long_len)
+                    print("开始本批插入，本批第一项数据为:" + datarow_list[0][1] + "-" + datarow_list[0][0] + "." + too_long_str)
+
+
                     temp_num = batch_insert_data(mariadb_conn, insert_sql_stmt, datarow_list)
                     inserted_num = inserted_num + temp_num
                     datarow_list.clear()
@@ -114,8 +129,6 @@ def parse_each_txt(txtfile_full_path, mariadb_conn, insert_sql_stmt):
 
 
 def batch_insert_data(mariadb_conn, sql_stmt, values_list):
-
-    return len(values_list)
 
     begin_time = time.time()
     table_cursor = mariadb_conn.cursor()
@@ -143,7 +156,8 @@ def parse_all_files():
     with open(tianya_log_file_path, "w", encoding="utf-8") as logfile:
         print("初始化日志文件")
 
-    mariadb_manager = MariadbManager("127.0.0.1", 3306, "privacydata", "root", "pmo@2016",  charset="utf8mb4")
+    # mariadb_manager = MariadbManager("127.0.0.1", 3306, "privacydata", "root", "pmo@2016",  charset="utf8mb4")
+    mariadb_manager = MariadbManager("192.168.1.116", 3308, "privacydata", "root", "Springdawn@2016", charset="utf8mb4")
     mariadb_manager.open_connect()
     insert_sql_stmt = "INSERT INTO tianya (login_name, password, email)"
     insert_sql_stmt = insert_sql_stmt + " VALUES (%s, %s, %s)"

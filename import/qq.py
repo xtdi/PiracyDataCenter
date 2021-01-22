@@ -122,7 +122,8 @@ def batch_insert_data(mariadb_conn, sql_stmt, values_list):
 
 def parse_multiqq_data():
 
-    mariadb_manager = MariadbManager("127.0.0.1", 3306, "privacydata", "root", "pmo@2016",  charset="utf8mb4")
+    # mariadb_manager = MariadbManager("127.0.0.1", 3306, "privacydata", "root", "pmo@2016",  charset="utf8mb4")
+    mariadb_manager = MariadbManager("192.168.1.116", 3308, "privacydata", "root", "Springdawn@2016", charset="utf8mb4")
     mariadb_manager.open_connect()
     insert_sql_stmt = "INSERT INTO qq (phone, uid, has_multi_qq)VALUES(%s,%s,%s)"
 
@@ -186,7 +187,7 @@ def parse_multiqq_data():
 def main():
 
     try:
-        parse_data()
+        parse_multiqq_data()
         # parse_multiqq_data()
     except Exception as ex:
         print(ex)
