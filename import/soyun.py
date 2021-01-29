@@ -11,8 +11,8 @@ def import_data():
     insert_sql_stmt = "INSERT INTO soyun_sgk (name, password, email, site, salt, other, id, remark)"
     insert_sql_stmt = insert_sql_stmt + "VALUES(%s,%s,%s,%s,%s,%s,%s,%s)"
 
-    file_full_path = r"F:\soyunsgk-test.sql"
-    with open(file_full_path, "r", encoding='utf8') as file_handle:
+    file_full_path = r"F:\soyun-script.sql"
+    with open(file_full_path, "r", encoding='utf16') as file_handle:
         inserted_num = 0
         datarow_list = []
         while True:
@@ -34,7 +34,6 @@ def import_data():
                         datarow_list.clear()
                         inserted_num = inserted_num + temp_num
                         print("共计插入数据%d行" % inserted_num)
-                        break
 
             except Exception as ex:
                 print(ex)
@@ -51,11 +50,13 @@ def build_insert_sql(sqlserverscript):
     values_str = values_str[values_str.find("(")+1:len(values_str)-1]
 
     values_list = values_str.split(",")
+    cur_column = 0
     for value_item in values_list:
         temp_item = value_item
         temp_item = temp_item.strip()
+        cur_column = cur_column + 1
 
-        temp_pos= temp_item.find("N'")
+        temp_pos = temp_item.find("N'")
         temp_item_type = temp_item[0:temp_item.find("'")+1]
         if temp_item == "NULL":
             mysql_values_tuple = mysql_values_tuple + (None,)
