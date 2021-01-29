@@ -2,8 +2,6 @@ import time
 from mariadb.mariadb_manager import MariadbManager
 from utils.baijiaxing import Baijiaxing
 
-# 邢涛---richard---8e5ea577c79a36cd8247a132834c7662022755dd---xbrc@163.com---510726197604054039---13591610030---0410-6120166
-
 
 def parse_jingdong_data():
 
