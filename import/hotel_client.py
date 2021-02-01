@@ -7,7 +7,8 @@ from mariadb.mariadb_manager import MariadbManager
 
 def transfer_data():
 
-    mariadb_manager = MariadbManager("127.0.0.1", 3306, "privacydata", "root", "pmo@2016", charset="utf8mb4")
+    # mariadb_manager = MariadbManager("127.0.0.1", 3306, "privacydata", "root", "pmo@2016", charset="utf8mb4")
+    mariadb_manager = MariadbManager("192.168.1.116", 3308, "privacydata", "root", "Springdawn@2016", charset="utf8mb4")
     mariadb_manager.open_connect()
 
     table_field_list = ["name", "card_no", "descriot", "ctf_tp", "ctf_Id", "gender", "birthday", "address"]
@@ -37,7 +38,7 @@ def transfer_data():
     insert_sql_stmt = insert_sql_stmt + ")VALUES(" + fieldvalue_exp_str + ")"
     """
 
-    rootdir = r"E:\Downloads\2000W"
+    rootdir = r"E:\work\privacydata\2000W"
     file_list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     file_num = 0
     for i in range(0, len(file_list)):
