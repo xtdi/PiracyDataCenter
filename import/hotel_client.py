@@ -141,10 +141,64 @@ def batch_insert_data(mariadb_conn, sql_stmt, values_list):
     return total_count
 
 
+def handle_kuahang_format(file_full_path):
+    table_field_list = ["name", "card_no", "descriot", "ctf_tp", "ctf_Id", "gender", "birthday", "address"]
+    table_field_list.extend(["zip", "dirty", "district1", "district2", "district3", "district4", "district5"])
+    table_field_list.extend(["district6", "first_name", "last_name", "duty", "mobile", "tel", "fax", "email", "nation"])
+    table_field_list.extend(["taste", "education", "company", "ctel", "caddress", "czip", "family", "version", "id"])
+
+    new_row_list = []
+    with open(file_full_path, mode="r", encoding="utf-8-sig") as file_handler:
+        csv_reader = csv.reader(file_handler)
+        row_num = 0
+        last_row = []
+        format_true_num = 0
+        need_kuahang = False
+        for cur_row in csv_reader:
+            row_num = row_num + 1
+            if len(cur_row) == 33:
+                format_true_num = format_true_num + 1
+            if cur_row[0] == "陈泉尧":
+                print()
+            if need_kuahang:
+                for num in range(7, 33):
+                    last_row[num] = cur_row[num-7]
+                new_row_list.append(last_row)
+                last_row = cur_row
+                need_kuahang = False
+                continue
+            else:
+                last_row = cur_row
+                if len(cur_row[32].strip()) == 0:
+                    other_element_is_null = True
+                    for num in range(8, 32):
+                        if len(cur_row[num].strip()) > 0:
+                            other_element_is_null = False
+                            break
+                    if other_element_is_null == True:
+                        need_kuahang = True
+                if need_kuahang:
+                    continue
+                else:
+                    new_row_list.append(cur_row)
+
+        print(format_true_num)
+        if row_num == format_true_num + 1:
+            print("所有行的列数都符合数量要求")
+    file_dir = os.path.dirname(file_full_path)
+    file_name = ""
+    with open("D:\\new-"+file_name, mode="w", encoding="utf-8-sig") as out_file:
+        writer = csv.writer(out_file)
+        writer.writerow(table_field_list)
+        for temp_item in new_row_list:
+            writer.writerow(temp_item)
+        print("写入完毕！")
+
 def main():
 
     try:
-        transfer_data()
+        # transfer_data()
+        handle_kuahang_format(r"D:\downloads\temp\invalid-0200W-400W.csv")
     except Exception as ex:
         print(ex)
 
