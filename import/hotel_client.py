@@ -158,8 +158,6 @@ def handle_kuahang_format(file_full_path):
             row_num = row_num + 1
             if len(cur_row) == 33:
                 format_true_num = format_true_num + 1
-            if cur_row[0] == "陈泉尧":
-                print()
             if need_kuahang:
                 for num in range(7, 33):
                     last_row[num] = cur_row[num-7]
@@ -186,8 +184,12 @@ def handle_kuahang_format(file_full_path):
         if row_num == format_true_num + 1:
             print("所有行的列数都符合数量要求")
     file_dir = os.path.dirname(file_full_path)
-    file_name = ""
-    with open("D:\\new-"+file_name, mode="w", encoding="utf-8-sig") as out_file:
+    new_file_dir = file_dir+"\\new"
+    isExists = os.path.exists(new_file_dir)
+    if not isExists:
+        os.makedirs(new_file_dir)
+    file_name = os.path.split(file_full_path)[-1]
+    with open(new_file_dir + "\\" +file_name, mode="w", encoding="utf-8-sig") as out_file:
         writer = csv.writer(out_file)
         writer.writerow(table_field_list)
         for temp_item in new_row_list:
