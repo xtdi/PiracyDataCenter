@@ -6,7 +6,6 @@ from mariadb.mariadb_manager import MariadbManager
 
 
 def transfer_data():
-
     # mariadb_manager = MariadbManager("127.0.0.1", 3306, "privacydata", "root", "pmo@2016", charset="utf8mb4")
     mariadb_manager = MariadbManager("192.168.1.116", 3308, "privacydata", "root", "Springdawn@2016", charset="utf8mb4")
     mariadb_manager.open_connect()
@@ -38,7 +37,7 @@ def transfer_data():
     insert_sql_stmt = insert_sql_stmt + ")VALUES(" + fieldvalue_exp_str + ")"
     """
 
-    rootdir = r"E:\work\privacydata\2000W"
+    rootdir = r"D:\downloads\temp\new"
     file_list = os.listdir(rootdir)  # 列出文件夹下所有的目录与文件
     file_num = 0
     for i in range(0, len(file_list)):
@@ -55,16 +54,25 @@ def parse_each_file(file_full_path, mariadbconn, insert_sql_stmt, table_field_li
     rows_num = 0
     invalid_rows = []
     datarow_list = []
+    null_rows_num = 0
     # file_full_path = r"E:\Downloads\2000W\1-200W.csv"
-    with open(file_full_path, "r", encoding="utf8") as file_handler:
+    with open(file_full_path, "r", encoding="utf-8-sig") as file_handler:
         csv_reader = csv.reader(file_handler)
         for cur_row in csv_reader:
             rows_num = rows_num + 1
+
             if rows_num == 1:
                 temp_card_no = cur_row[1]
-                if temp_card_no == "CardNo":
+                if temp_card_no == "card_no":
                     # 存在标题行
                     continue
+
+            if rows_num < 5:
+                continue
+            if len(cur_row) == 0:
+                null_rows_num = null_rows_num + 1
+                continue
+
             try:
                 cur_row_value_tuple = build_insert_values(cur_row)
                 tuple_len = len(cur_row_value_tuple)
@@ -91,6 +99,7 @@ def parse_each_file(file_full_path, mariadbconn, insert_sql_stmt, table_field_li
         datarow_list.clear()
     print("已经插入数据共计:%d行" % inserted_num + ",已经读取物理行共计:%d" % rows_num)
     print("无效数据行：%d" % len(invalid_rows))
+    print("空数据行：%d" % null_rows_num)
 
     file_name = os.path.split(file_full_path)[-1]
 
@@ -108,11 +117,15 @@ def build_insert_values(field_value_list):
     for i in range(len(field_value_list)):
         temp_item = field_value_list[i].strip()
         if len(temp_item) == 0:
-            mysql_values_tuple = mysql_values_tuple + (None,)
+            mysql_values_tuple = mysql_values_tuple + (None, )
             continue
 
         if i == 6:
-            birth_date = datetime.datetime.strptime(temp_item, "%Y%m%d")
+            birth_date = None
+            try:
+                birth_date = datetime.datetime.strptime(temp_item, "%Y%m%d")
+            except Exception  as ecx:
+                birth_date = None
             mysql_values_tuple = mysql_values_tuple + (birth_date,)
         elif i == 32:
             temp_id = int(temp_item)
@@ -125,6 +138,7 @@ def build_insert_values(field_value_list):
 def batch_insert_data(mariadb_conn, sql_stmt, values_list):
 
     # return len(values_list)
+
     begin_time = time.time()
     table_cursor = mariadb_conn.cursor()
     total_count = 0
@@ -199,8 +213,8 @@ def handle_kuahang_format(file_full_path):
 def main():
 
     try:
-        # transfer_data()
-        handle_kuahang_format(r"D:\downloads\temp\invalid-0200W-400W.csv")
+        transfer_data()
+        # handle_kuahang_format(r"D:\downloads\temp\invalid-最后5000.csv")
     except Exception as ex:
         print(ex)
 
