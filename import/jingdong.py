@@ -384,6 +384,39 @@ def save_other_records():
                 print("程序异常退出，已经插入数据%d行" % total_rows)
                 break
 
+
+def update_mobile_phone():
+
+    mariadb_manager = MariadbManager("127.0.0.1", 3306, "privacydata", "root", "pmo@2016",  charset="utf8mb4")
+    #mariadb_manager = MariadbManager("192.168.1.116", 3308, "privacydata", "root", "Springdawn@2016", charset="utf8mb4")
+    mariadb_manager.open_connect()
+
+    cur_row_num = 0
+    inserted_num = 0
+    block_len = 100000
+    while True:
+        try:
+            query_sql = "SELECT * FROM jingdong where  jingdong_id >  " + str(cur_row_num) + " and jingdong_id <= "
+            query_sql = query_sql + str(cur_row_num + block_len) + " order by [id] "
+
+
+            mysql_query_cursor = mariadb_manager.connect.cursor()
+
+            mysql_query_cursor.execute(query_sql)
+            result_row = mysql_query_cursor.fetchone()
+            datarow_list = []
+            while result_row:
+                datarow_list.append(result_row)
+            cur_row_num = cur_row_num + block_len
+
+        except Exception as ex:
+            print(ex)
+            print("程序异常退出，已经插入数据%d行" % inserted_num)
+            break
+
+
+
+
 def main():
 
     try:
