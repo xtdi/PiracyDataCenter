@@ -210,10 +210,82 @@ def handle_kuahang_format(file_full_path):
             writer.writerow(temp_item)
         print("写入完毕！")
 
+
+def update_mobile_phone():
+
+    mariadb_manager = MariadbManager("192.168.1.116", 3308, "privacydata", "root", "Springdawn@2016", charset="utf8mb4")
+    mariadb_manager.open_connect()
+    total_rows_num = 0
+    cur_row_num = 0
+    inserted_num = 0
+    block_len = 100000
+    randam_num = 0
+    query_total = 0
+    while True:
+        try:
+            print(str(cur_row_num) +"  读数据开始：" + str(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())))
+            query_sql = "SELECT hotel_client_id,tel FROM hotel_client where  hotel_client_id >  " + str(cur_row_num) + " and hotel_client_id <= "
+            query_sql = query_sql + str(cur_row_num + block_len) + " and (mobile='' or mobile is null)  order by hotel_client_id "
+            query_total = query_total + block_len
+            mysql_query_cursor = mariadb_manager.connect.cursor()
+
+            mysql_query_cursor.execute(query_sql)
+            total_rows_num = total_rows_num + mysql_query_cursor.rowcount
+
+            if cur_row_num > 20050000:
+                print("遍历完成")
+                break
+
+            if mysql_query_cursor.rowcount == 0:
+                cur_row_num = cur_row_num + block_len
+                continue
+
+            result_row = mysql_query_cursor.fetchall()
+            datarow_list = []
+            for cur_row in result_row:
+                temp_hotel_client_id = cur_row[0]
+                temp_telphone = cur_row[1]
+                if temp_telphone is None:
+                    continue
+                if len(temp_telphone) == 11:
+                    if temp_telphone[0] == "1":
+                        datarow_list.append([temp_telphone, temp_hotel_client_id])
+                elif len(temp_telphone) == 12:
+                    if temp_telphone[0:2] == "01":
+                        try:
+                            temp_phone_int = int(temp_telphone)
+                            if len(str(temp_phone_int)) == 11:
+                                datarow_list.append([str(temp_phone_int), temp_hotel_client_id])
+                        except Exception as ec:
+                            randam_num = randam_num + 1
+            cur_row_num = cur_row_num + block_len
+            mysql_query_cursor.close()
+            this_update_num = 0
+            if len(datarow_list) > 0:
+                print("插入数据开始：" + str(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())))
+                print(datarow_list[0])
+                update_cursor = mariadb_manager.connect.cursor()
+                update_sql = "UPDATE hotel_client SET mobile = (%s) WHERE hotel_client_id = (%s)"
+                update_cursor.executemany(update_sql, datarow_list)
+                mariadb_manager.connect.commit()
+                this_update_num = update_cursor.rowcount
+                inserted_num = inserted_num + update_cursor.rowcount
+                update_cursor.close()
+
+            print("已经查询总行数%d"%query_total + " 需要更新行数%d"%len(datarow_list)
+                  + "  本次完成更新%d"%this_update_num + " 累计更新行数%d"%inserted_num)
+            datarow_list.clear()
+        except Exception as ex:
+            print(ex)
+            print("程序异常退出，已经插入数据%d行" % inserted_num)
+            break
+
+    mariadb_manager.close_connection()
+
 def main():
 
     try:
-        transfer_data()
+        update_mobile_phone()
         # handle_kuahang_format(r"D:\downloads\temp\invalid-最后5000.csv")
     except Exception as ex:
         print(ex)
