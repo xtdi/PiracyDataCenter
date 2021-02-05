@@ -216,7 +216,7 @@ def update_mobile_phone():
     mariadb_manager = MariadbManager("192.168.1.116", 3308, "privacydata", "root", "Springdawn@2016", charset="utf8mb4")
     mariadb_manager.open_connect()
     total_rows_num = 0
-    cur_row_num = 0
+    cur_row_num = 8000000
     inserted_num = 0
     block_len = 100000
     randam_num = 0
