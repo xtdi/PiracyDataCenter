@@ -222,7 +222,7 @@ def extract_valid_qq_from_mysqlsoyun():
             temp_num = batch_insert_data(insertdb_manager.connect, insert_sql_stmt, datarow_list)
             inserted_num = inserted_num + temp_num
             datarow_list.clear()
-            print("累计插入数据共计:%d行" % cur_row_num)
+            print("累计插入数据共计:%d行" % inserted_num)
             cur_row_num = cur_row_num + block_len
 
         except Exception as ex:
