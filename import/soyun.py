@@ -177,11 +177,65 @@ def transfer_data():
             break
 
 
+def extract_valid_qq_from_mysqlsoyun():
+
+    soyun_manager = MariadbManager("192.168.1.116", 3308, "soyun", "root", "Springdawn@2016", charset="utf8mb4")
+    soyun_manager.open_connect()
+
+    insertdb_manager = MariadbManager("192.168.1.116", 3308, "soyun", "root", "Springdawn@2016", charset="utf8mb4")
+    insertdb_manager.open_connect()
+
+    insert_sql_stmt = "INSERT INTO temp (qq_no,phone,info_source)"
+    insert_sql_stmt = insert_sql_stmt + "VALUES(%s,%s,%s)"
+
+    mmm=0
+    cur_row_num = 0
+    inserted_num = 0
+    block_len = 100000
+    while True:
+        try:
+            query_sql = "SELECT name,password FROM soyun_sgk  where soyun_id > " + str(cur_row_num) + " and soyun_id <= "
+            query_sql = query_sql + str(cur_row_num + block_len) + " and  site = 'qq'  and CHAR_LENGTH(`password`)=11"
+            query_sql = query_sql + " and left(`password`,1)='1' order by soyun_id "
+            # print(query_sql)
+            soyun_query_cursor = soyun_manager.connect.cursor()
+            soyun_query_cursor.execute(query_sql)
+            result_row = soyun_query_cursor.fetchone()
+            datarow_list = []
+            while result_row:
+
+                temp_qq_no = result_row[0]
+                temp_phone = result_row[1].strip()
+                temp_phone_int = 0
+                try:
+                    temp_phone_int = int(temp_phone)
+                except Exception as intex:
+                    # print(intex)
+                    result_row = soyun_query_cursor.fetchone()
+                    continue
+                if len(str(temp_phone_int)) == 11:
+                    item_tuple = (temp_qq_no, temp_phone, "soyun-qq")
+                    datarow_list.append(item_tuple)
+                result_row = soyun_query_cursor.fetchone()
+
+            soyun_query_cursor.close()
+            temp_num = batch_insert_data(insertdb_manager.connect, insert_sql_stmt, datarow_list)
+            inserted_num = inserted_num + temp_num
+            datarow_list.clear()
+            print("累计插入数据共计:%d行" % cur_row_num)
+            cur_row_num = cur_row_num + block_len
+
+        except Exception as ex:
+            print(ex)
+            print("程序异常退出，已经插入数据%d行" % inserted_num)
+            break
+
 
 def main():
 
     try:
-        transfer_data()
+        # transfer_data()
+        extract_valid_qq_from_mysqlsoyun()
     except Exception as ex:
         print(ex)
 

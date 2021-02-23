@@ -184,10 +184,31 @@ def parse_multiqq_data():
         print("文件读取完成，物理行共计%d行" % (total_rows-1) + " 共插入数据%d行" % inserted_num)
 
 
+def extract_valid_qq_from_mysqlsoyun():
+
+    privacydata_manager = MariadbManager("127.0.0.1", 3306, "privacydata", "root", "pmo@2016",  charset="utf8mb4")
+    # privacydata_manager = MariadbManager("192.168.1.116", 3308, "privacydata", "root", "Springdawn@2016", charset="utf8mb4")
+    privacydata_manager.open_connect()
+
+    soyun_manager = MariadbManager("192.168.1.116", 3308, "soyun", "root", "Springdawn@2016", charset="utf8mb4")
+    soyun_manager.open_connect()
+    query_sql = "SELECT distinct(site),count(*) FROM soyun_sgk  group by site "
+    mysql_query_cursor = soyun_manager.connect.cursor()
+    mysql_query_cursor.execute(query_sql)
+
+    result_row = mysql_query_cursor.fetchall()
+    datarow_list = []
+    for cur_row in result_row:
+        temp_site = cur_row[0]
+        temp_num = cur_row[1]
+        print(temp_site)
+    mysql_query_cursor.close()
+
+
 def main():
 
     try:
-        parse_multiqq_data()
+        extract_valid_qq_from_mysqlsoyun()
         # parse_multiqq_data()
     except Exception as ex:
         print(ex)
