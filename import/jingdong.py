@@ -456,10 +456,144 @@ def update_mobile_phone():
     mariadb_manager.close_connection()
 
 
+def extract_valid_qq():
+
+    soyun_manager = MariadbManager("192.168.1.116", 3308, "privacydata", "root", "Springdawn@2016", charset="utf8mb4")
+    soyun_manager.open_connect()
+
+    insertdb_manager = MariadbManager("192.168.1.116", 3308, "soyun", "root", "Springdawn@2016", charset="utf8mb4")
+    insertdb_manager.open_connect()
+
+    insert_sql_stmt = "INSERT INTO temp (qq_no,phone,info_source)"
+    insert_sql_stmt = insert_sql_stmt + "VALUES(%s,%s,%s)"
+
+    cur_row_num = 122157565
+    inserted_num = 0
+    block_len = 100000
+    while True:
+        try:
+
+            if cur_row_num > 227587801:
+                print("累计插入数据共计:%d行" % inserted_num)
+                break
+
+            query_sql = "SELECT email,phone FROM jingdong  where jingdong_id > " + str(cur_row_num)
+            query_sql = query_sql + " and jingdong_id <= " + str(cur_row_num + block_len) + " and email like '%qq.com%'"
+            query_sql = query_sql + " order by jingdong_id "
+
+            soyun_query_cursor = soyun_manager.connect.cursor()
+            soyun_query_cursor.execute(query_sql)
+            result_row = soyun_query_cursor.fetchone()
+            datarow_list = []
+            while result_row:
+
+                temp_phone = result_row[1].strip()
+                if len(temp_phone) == 0:
+                    result_row = soyun_query_cursor.fetchone()
+                    continue
+
+                temp_email = result_row[0].strip()
+                temp_pos = temp_email.find("@")
+                temp_qq = temp_email[0:temp_pos]
+                temp_qq_int = 0
+                try:
+                    temp_qq_int = int(temp_qq)
+                except Exception as intex:
+                    # print(intex)
+                    result_row = soyun_query_cursor.fetchone()
+                    continue
+                if len(str(temp_qq_int)) > 1:
+                    item_tuple = (temp_qq, temp_phone, "jingdong")
+                    datarow_list.append(item_tuple)
+                result_row = soyun_query_cursor.fetchone()
+
+            soyun_query_cursor.close()
+            if len(datarow_list) > 0:
+                temp_num = batch_insert_data(insertdb_manager.connect, insert_sql_stmt, datarow_list)
+                inserted_num = inserted_num + temp_num
+                datarow_list.clear()
+                print("累计插入数据共计:%d行" % inserted_num)
+            cur_row_num = cur_row_num + block_len
+
+        except Exception as ex:
+            print(ex)
+            print("程序异常退出，已经插入数据%d行" % inserted_num)
+            break
+
+
+def diff_qq_vs_jingdong():
+
+    qq_manager = MariadbManager("192.168.1.116", 3308, "privacydata", "root", "Springdawn@2016", charset="utf8mb4")
+    qq_manager.open_connect()
+
+    query_manager = MariadbManager("192.168.1.116", 3308, "soyun", "root", "Springdawn@2016", charset="utf8mb4")
+    query_manager.open_connect()
+
+    insert_manager = MariadbManager("192.168.1.116", 3308, "soyun", "root", "Springdawn@2016", charset="utf8mb4")
+    insert_manager.open_connect()
+
+    insert_sql_stmt = "INSERT INTO diffqq (qq_no,phone,info_source)"
+    insert_sql_stmt = insert_sql_stmt + "VALUES(%s,%s,%s)"
+
+    # 10048950
+    cur_row_num = 13648950
+    inserted_num = 0
+    block_len = 100000
+    while True:
+        try:
+            if cur_row_num > 30632833:
+                print("累计插入数据共计:%d行" % inserted_num)
+                break
+            query_sql = "SELECT qq_no,phone FROM temp  where temp_id > " + str(cur_row_num)
+            query_sql = query_sql + " and temp_id <= " + str(cur_row_num + block_len) + " order by temp_id "
+            print(query_sql)
+            query_cursor = query_manager.connect.cursor()
+            query_cursor.execute(query_sql)
+            datarow_list = []
+            for temp_index in range(query_cursor.rowcount):
+
+                result_row = query_cursor.fetchone()
+                temp_qq_no = result_row[0].strip()
+                temp_phone = result_row[1].strip()
+                if len(temp_qq_no) > 10:
+                    continue
+
+                qq_query_sql = "SELECT phone FROM qq  where qq_no='" + temp_qq_no + "'"
+                qq_query_cursor = qq_manager.connect.cursor()
+                qq_query_cursor.execute(qq_query_sql)
+                tempcount = qq_query_cursor.rowcount
+                if tempcount == 0:
+                    item_tuple = (temp_qq_no, temp_phone, "jingdong")
+                    datarow_list.append(item_tuple)
+                else:
+                    temp_phone_list = []
+                    for i in range(tempcount):
+                        # 获取查询的结果
+                        qq_cur_row = qq_query_cursor.fetchone()
+                        temp_phone_list.append(qq_cur_row[0])
+                    if temp_phone not in temp_phone_list:
+                        item_tuple = (temp_qq_no, temp_phone, "jingdong")
+                        datarow_list.append(item_tuple)
+                qq_query_cursor.close()
+            query_cursor.close()
+            print("开始insert")
+            if len(datarow_list) > 0:
+                temp_num = batch_insert_data(insert_manager.connect, insert_sql_stmt, datarow_list)
+                inserted_num = inserted_num + temp_num
+                datarow_list.clear()
+                print("累计插入数据共计:%d行" % inserted_num)
+            cur_row_num = cur_row_num + block_len
+        except Exception as ex:
+            print(ex)
+            print("程序异常退出，已经插入数据%d行" % inserted_num)
+            break
+
+
 def main():
 
     try:
-        update_mobile_phone()
+        diff_qq_vs_jingdong()
+        # update_mobile_phone()
         # parse_jingdong_data()
     except Exception as ex:
         print(ex)

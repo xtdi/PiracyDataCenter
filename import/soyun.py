@@ -188,7 +188,6 @@ def extract_valid_qq_from_mysqlsoyun():
     insert_sql_stmt = "INSERT INTO temp (qq_no,phone,info_source)"
     insert_sql_stmt = insert_sql_stmt + "VALUES(%s,%s,%s)"
 
-    mmm=0
     cur_row_num = 0
     inserted_num = 0
     block_len = 100000
